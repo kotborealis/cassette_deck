@@ -129,7 +129,7 @@ void xredraw(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev)
 	}
 
 	if (e->count == 0)
-		refresh(xw, term);
+		refresh(xw, term, 0);
 }
 
 void (*event_func[LASTEvent])(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev) = {
@@ -202,6 +202,12 @@ int main(int argc, char *const argv[])
 	confev.height = TERM_HEIGHT;
 	xresize(&xw, &term, (XEvent *) &confev);
 
+	bmp_img img;
+	bmp_img_init_df (&img, 1024, 1024);
+
+	char test[] = "echo \"Hello world\"\n";
+	ewrite(term.fd, test, strlen(test));
+
 	/* main loop */
 	while (child_alive) {
 		while(XPending(xw.display)) {
@@ -219,7 +225,7 @@ int main(int argc, char *const argv[])
 				if (DEBUG)
 					ewrite(STDOUT_FILENO, buf, size);
 				parse(&term, buf, size);
-				refresh(&xw, &term);
+				refresh(&xw, &term, &img);
 			}
 		}
 	}

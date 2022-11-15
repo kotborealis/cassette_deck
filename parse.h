@@ -269,6 +269,8 @@ void parse(struct terminal_t *term, uint8_t *buf, int size)
 
 	for (int i = 0; i < size; i++) {
 		ch = buf[i];
+		if(ch == '\a')
+			exit(1);
 		if (term->esc.state == STATE_RESET) {
 			/* interrupted by illegal byte */
 			if (term->charset.following_byte > 0 && (ch < 0x80 || ch > 0xBF)) {

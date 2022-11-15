@@ -3,6 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
+#include "../libbmp.h"
 
 #define XK_NO_MOD UINT_MAX
 
@@ -187,7 +188,7 @@ static inline void draw_sixel(struct xwindow_t *xw, int line, int col, struct ce
 	}
 }
 
-static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int line)
+static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int line, bmp_img* img)
 {
 	int bdf_padding, glyph_width, margin_right;
 	int col, w, h;
@@ -234,11 +235,19 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 				color_pair.bg = color_pair.fg;
 
 			for (w = 0; w < CELL_WIDTH; w++) {
+				int x = term->width - 1 - margin_right - w;
+				int y = line * CELL_HEIGHT + h;
 				/* set color palette */
-				if (glyphp->bitmap[h] & (0x01 << (bdf_padding + w)))
+				if (glyphp->bitmap[h] & (0x01 << (bdf_padding + w))) {
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.fg]);
-				else if (color_pair.bg != DEFAULT_BG)
+					if(img)
+						bmp_pixel_init (&(img->img_pixels[y][x]), 255, 255, 255);
+				}
+				else if (color_pair.bg != DEFAULT_BG) {
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.bg]);
+					if(img)
+						bmp_pixel_init (&(img->img_pixels[y][x]), 0, 0, 0);
+				}
 				else /* already draw */
 					continue;
 
@@ -252,7 +261,7 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 	term->line_dirty[line] = ((term->mode & MODE_CURSOR) && term->cursor.y == line) ? true: false;
 }
 
-void refresh(struct xwindow_t *xw, struct terminal_t *term)
+void refresh(struct xwindow_t *xw, struct terminal_t *term, bmp_img* img)
 {
 	int line, update_from, update_to;
 
@@ -262,7 +271,7 @@ void refresh(struct xwindow_t *xw, struct terminal_t *term)
 	update_from = update_to = -1;
 	for (line = 0; line < term->lines; line++) {
 		if (term->line_dirty[line]) {
-			draw_line(xw, term, line);
+			draw_line(xw, term, line, img);
 
 			if (update_from == -1)
 				update_from = update_to = line;
@@ -275,4 +284,10 @@ void refresh(struct xwindow_t *xw, struct terminal_t *term)
 	if (update_from != -1)
 		XCopyArea(xw->display, xw->pixbuf, xw->window, xw->gc, 0, update_from * CELL_HEIGHT,
 			term->width, (update_to - update_from + 1) * CELL_HEIGHT, 0, update_from * CELL_HEIGHT);
+
+	if(img) {
+		bmp_img_write (img, "test.bmp");
+		bmp_img_free(img);
+		bmp_img_alloc(img);
+	}
 }

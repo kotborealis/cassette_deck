@@ -37,9 +37,9 @@ yaft: yaft.c $(HDR)
 	# If you want to change configuration, please modify conf.h before make (see conf.h for more detail)
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
 
-yaftx: x/yaftx.c $(HDR)
+yaftx: x/yaftx.c ./libbmp.c $(HDR)
 	# If you want to change configuration, please modify conf.h before make (see conf.h for more detail)
-	$(CC) -o $@ $< $(XCFLAGS) $(XLDFLAGS)
+	$(CC) -o $@ ./libbmp.c $< $(XCFLAGS) $(XLDFLAGS)
 
 install:
 	mkdir -p $(PREFIX)/share/terminfo
