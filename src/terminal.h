@@ -1,3 +1,6 @@
+#pragma once
+#include <math.h>
+
 /* See LICENSE for licence details. */
 void erase_cell(struct terminal_t *term, int y, int x)
 {
@@ -349,8 +352,8 @@ bool term_init(struct terminal_t *term, int width, int height)
 	term->width  = width;
 	term->height = height;
 
-	term->cols  = term->width / CELL_WIDTH;
-	term->lines = term->height / CELL_HEIGHT;
+	term->cols  = floor((float)term->width / (float)CELL_WIDTH);
+	term->lines = floor((float)term->height / (float)CELL_HEIGHT);
 
 	term->esc.size = ESCSEQ_SIZE;
 

@@ -9,6 +9,10 @@
 #include "../ctrlseq/osc.h"
 #include "../ctrlseq/dcs.h"
 #include "../parse.h"
+#include "../3rd_party/gifenc/gifenc.h"
+#include "../tape_player/tape_player.h"
+
+tape_player_t* player;
 
 void sig_handler(int signo)
 {
@@ -17,6 +21,10 @@ void sig_handler(int signo)
 	if (signo == SIGCHLD) {
 		child_alive = false;
 		wait(NULL);
+	}
+
+	if(signo == SIGUSR2) {
+		tape_player_awaited(player);
 	}
 }
 
@@ -114,27 +122,9 @@ void xresize(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev)
 
 void xredraw(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev)
 {
-	XExposeEvent *e = &ev->xexpose;
-	int i, lines, update_from;
-
-	logging(DEBUG, "xredraw() count:%d x:%d y:%d width:%d height:%d\n",
-		e->count, e->x, e->y, e->width, e->height);
-
-	update_from = e->y / CELL_HEIGHT;
-	lines       = my_ceil(e->height, CELL_HEIGHT);
-
-	for (i = 0; i < lines; i++) {
-		if ((update_from + i) < term->lines)
-			term->line_dirty[update_from + i] = true;
-	}
-
-	if (e->count == 0)
-		refresh(xw, term, 0);
 }
 
 void (*event_func[LASTEvent])(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev) = {
-	[KeyPress]         = xkeypress,
-	[ConfigureNotify]  = xresize,
 	[Expose]           = xredraw,
 };
 
@@ -146,11 +136,17 @@ bool fork_and_exec(int *master, const char *cmd, char *const argv[], int lines, 
 			but useful for calculating terminal cell size */
 		.ws_ypixel = CELL_HEIGHT * lines, .ws_xpixel = CELL_WIDTH * cols};
 
+	pid_t host_pid = getpid();
+
 	pid = eforkpty(master, NULL, NULL, &ws);
 	if (pid < 0)
 		return false;
 	else if (pid == 0) { /* child */
 		esetenv("TERM", term_name, 1);
+
+		char* prompt_command = malloc(1024);
+		sprintf(prompt_command, "kill -12 %d", host_pid);
+		esetenv("PROMPT_COMMAND", prompt_command, 1);
 		eexecvp(cmd, argv);
 		/* never reach here */
 		exit(EXIT_FAILURE);
@@ -160,8 +156,20 @@ bool fork_and_exec(int *master, const char *cmd, char *const argv[], int lines, 
 
 int main(int argc, char *const argv[])
 {
+	FILE *f = fopen(argv[1], "rb");
+	fseek(f, 0, SEEK_END);
+	long fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	char *data = malloc(fsize + 1);
+	fread(data, fsize, 1, f);
+	fclose(f);
+
+	data[fsize] = 0;
+
+	player = tape_player_new(data);
+
 	extern const char *shell_cmd; /* defined in conf.h */
-	const char *cmd;
 	uint8_t buf[BUFSIZE];
 	ssize_t size;
 	fd_set fds;
@@ -178,38 +186,50 @@ int main(int argc, char *const argv[])
 
 	if (!sig_set(SIGCHLD, sig_handler, SA_RESTART))
 		logging(ERROR, "signal initialize failed\n");
+	if(!sig_set(SIGUSR2, sig_handler, SA_RESTART))
+		logging(ERROR, "signal initialize failed\n");
 
 	if (!xw_init(&xw)) {
 		logging(FATAL, "xwindow initialize failed\n");
 		goto xw_init_failed;
 	}
 
-	if (!term_init(&term, xw.width, xw.height)) {
+	if (!term_init(&term, tape_player_width(player), tape_player_height(player))) {
 		logging(FATAL, "terminal initialize failed\n");
 		goto term_init_failed;
 	}
 
 	/* fork and exec shell */
-	cmd = (argc < 2) ? shell_cmd: argv[1];
-	if (!fork_and_exec(&term.fd, cmd, argv + 1, term.lines, term.cols)) {
+	const char* cmd = "bash";
+	char* args[] = {"bash", "--noprofile", "--norc", NULL};
+
+	if (!fork_and_exec(&term.fd, cmd, args, term.lines, term.cols)) {
 		logging(FATAL, "forkpty failed\n");
 		goto fork_failed;
 	}
 	child_alive = true;
 
 	/* initial terminal size defined in x.h */
-	confev.width  = TERM_WIDTH;
-	confev.height = TERM_HEIGHT;
-	xresize(&xw, &term, (XEvent *) &confev);
+	// confev.width  = tape_player_width(player);
+	// confev.height = tape_player_height(player);
+	// xresize(&xw, &term, (XEvent *) &confev);
 
-	bmp_img img;
-	bmp_img_init_df (&img, 1024, 1024);
-
-	char test[] = "echo \"Hello world\"\n";
-	ewrite(term.fd, test, strlen(test));
+    ge_GIF *img = ge_new_gif(
+        tape_player_output(player),
+        tape_player_width(player), tape_player_height(player),
+        (uint8_t []) {  /* palette */
+            0x00, 0x00, 0x00, /* 0 -> black */
+            0xff, 0xff, 0xff, /* 1 -> white */
+        },
+        1,              /* palette depth == log2(# of colors) */
+        -1,             /* no transparency */
+        0               /* infinite loop */
+    );
 
 	/* main loop */
 	while (child_alive) {
+		long long start = timeInMilliseconds();
+
 		while(XPending(xw.display)) {
 			XNextEvent(xw.display, &ev);
 			if (XFilterEvent(&ev, None))
@@ -225,10 +245,29 @@ int main(int argc, char *const argv[])
 				if (DEBUG)
 					ewrite(STDOUT_FILENO, buf, size);
 				parse(&term, buf, size);
-				refresh(&xw, &term, &img);
 			}
 		}
+
+		long long diff;
+		int stop = 0;
+		do {
+			diff = timeInMilliseconds() - start;
+			if(diff < 1000 / 15) {
+				usleep(20 * 1000);
+			}
+			if(tape_player_frame(player, ewrite, term.fd)) {
+				stop = 1;
+				break;
+			}
+		} while(diff < 1000 / 15);
+
+		refresh(&xw, &term, img);
+
+		if(stop)
+			break;
 	}
+
+	ge_close_gif(img);
 
 	/* die */
 	term_die(&term);

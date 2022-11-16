@@ -3,7 +3,15 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
-#include "../libbmp.h"
+#include "../3rd_party/gifenc/gifenc.h"
+#include<sys/time.h>
+
+long long timeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
 
 #define XK_NO_MOD UINT_MAX
 
@@ -72,7 +80,7 @@ struct xwindow_t {
 	unsigned long color_palette[COLORS];
 };
 
-#define PXCACHE_SIZE (1024)
+#define PXCACHE_SIZE (512)
 struct pxcache_entry {
 	uint32_t color;
 	unsigned long pixel;
@@ -188,7 +196,7 @@ static inline void draw_sixel(struct xwindow_t *xw, int line, int col, struct ce
 	}
 }
 
-static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int line, bmp_img* img)
+static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int line, ge_GIF* img)
 {
 	int bdf_padding, glyph_width, margin_right;
 	int col, w, h;
@@ -199,6 +207,14 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 	/* at first, fill all pixels of line in background color */
 	XSetForeground(xw->display, xw->gc, xw->color_palette[DEFAULT_BG]);
 	XFillRectangle(xw->display, xw->pixbuf, xw->gc, 0, line * CELL_HEIGHT, term->width, CELL_HEIGHT);
+
+	if(img) {
+		for(int h = line * CELL_HEIGHT; h < line * CELL_HEIGHT + CELL_HEIGHT; h++) {
+			for(int w = 0; w < term->width; w++) {
+				img->frame[img->w * h + w] = 0;
+			}
+		}
+	}
 
 	for (col = term->cols - 1; col >= 0; col--) {
 		margin_right = (term->cols - 1 - col) * CELL_WIDTH;
@@ -240,13 +256,11 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 				/* set color palette */
 				if (glyphp->bitmap[h] & (0x01 << (bdf_padding + w))) {
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.fg]);
-					if(img)
-						bmp_pixel_init (&(img->img_pixels[y][x]), 255, 255, 255);
+					img->frame[img->w * y + x] = 1;
 				}
 				else if (color_pair.bg != DEFAULT_BG) {
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.bg]);
-					if(img)
-						bmp_pixel_init (&(img->img_pixels[y][x]), 0, 0, 0);
+					img->frame[img->w * y + x] = 1;
 				}
 				else /* already draw */
 					continue;
@@ -257,27 +271,22 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 			}
 		}
 	}
-
-	term->line_dirty[line] = ((term->mode & MODE_CURSOR) && term->cursor.y == line) ? true: false;
 }
 
-void refresh(struct xwindow_t *xw, struct terminal_t *term, bmp_img* img)
+long long last_frame_timing = 0;
+
+void refresh(struct xwindow_t *xw, struct terminal_t *term, ge_GIF* img)
 {
 	int line, update_from, update_to;
 
-	if (term->mode & MODE_CURSOR)
-		term->line_dirty[term->cursor.y] = true;
-
 	update_from = update_to = -1;
 	for (line = 0; line < term->lines; line++) {
-		if (term->line_dirty[line]) {
-			draw_line(xw, term, line, img);
+		draw_line(xw, term, line, img);
 
-			if (update_from == -1)
-				update_from = update_to = line;
-			else
-				update_to = line;
-		}
+		if (update_from == -1)
+			update_from = update_to = line;
+		else
+			update_to = line;
 	}
 
 	/* actual display update: vertical synchronizing */
@@ -285,9 +294,11 @@ void refresh(struct xwindow_t *xw, struct terminal_t *term, bmp_img* img)
 		XCopyArea(xw->display, xw->pixbuf, xw->window, xw->gc, 0, update_from * CELL_HEIGHT,
 			term->width, (update_to - update_from + 1) * CELL_HEIGHT, 0, update_from * CELL_HEIGHT);
 
-	if(img) {
-		bmp_img_write (img, "test.bmp");
-		bmp_img_free(img);
-		bmp_img_alloc(img);
+	long long now = timeInMilliseconds();
+	if(last_frame_timing > 0) {
+		long long diff = (now - last_frame_timing) / 10;
+		ge_add_frame(img, diff);
 	}
+
+	last_frame_timing = now;
 }
