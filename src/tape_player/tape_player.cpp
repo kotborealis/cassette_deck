@@ -21,10 +21,19 @@ extern "C" {
 #endif
 
 tape_player_t* tape_player_new(char* src) {
-    auto* tape = new std::queue<TapeCommand>();
+    TapeParser* tape = nullptr;
+
+    try {
+        tape = new TapeParser(src);
+    }
+    catch(TapeException ex) {
+        printf("Error while parsing tape: %s\n", ex.what());
+        return nullptr;
+    }
+
     tape_player_t* player = (tape_player_t*)malloc(sizeof(tape_player_t));
     player->last_frame_time = 0;
-    player->tape = new TapeParser(src);
+    player->tape = tape;
     player->awaiting = 0;
 
     return player;

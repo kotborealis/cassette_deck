@@ -52,82 +52,6 @@ void check_fds(fd_set *fds, struct timeval *tv, int master)
 	eselect(master + 1, fds, NULL, NULL, tv);
 }
 
-char *keyremap(KeySym keysym, unsigned int state)
-{
-	int length;
-	unsigned int mask;
-
-	length = sizeof(keymap) / sizeof(keymap[0]);
-
-	for (int i = 0; i < length; i++) {
-		mask = keymap[i].mask;
-		if (keymap[i].keysym == keysym &&
-			((state & mask) == mask || (mask == XK_NO_MOD && !state)))
-			return (char *) keymap[i].str;
-	}
-	return NULL;
-}
-
-void xkeypress(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev)
-{
-	int size;
-	char buf[BUFSIZE], *customkey;
-	XKeyEvent *e = &ev->xkey;
-	KeySym keysym;
-
-	//size = XmbLookupString(xw->ic, e, buf, BUFSIZE, &keysym, NULL);
-	(void) xw;
-
-	size = XLookupString(e, buf, BUFSIZE, &keysym, NULL);
-	if ((customkey = keyremap(keysym, e->state))) {
-		ewrite(term->fd, customkey, strlen(customkey));
-	} else {
-		if (size == 1 && (e->state & Mod1Mask)) {
-			buf[1] = buf[0];
-			buf[0] = '\033';
-			size = 2;
-		}
-		ewrite(term->fd, buf, size);
-	}
-}
-
-void xresize(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev)
-{
-	XConfigureEvent *e = &ev->xconfigure;
-	struct winsize ws;
-
-	logging(DEBUG, "xresize() term.width:%d term.height:%d width:%d height:%d\n",
-		term->width, term->height, e->width, e->height);
-
-	(void ) xw; /* unused */
-
-	if (e->width == term->width && e->height == term->height)
-		return;
-
-	term->width  = e->width;
-	term->height = e->height;
-
-	term->cols  = term->width / CELL_WIDTH;
-	term->lines = term->height / CELL_HEIGHT;
-
-	term->scroll.top = 0;
-	term->scroll.bottom = term->lines - 1;
-
-	ws.ws_col = term->cols;
-	ws.ws_row = term->lines;
-	ws.ws_xpixel = CELL_WIDTH * term->cols;
-	ws.ws_ypixel = CELL_HEIGHT * term->lines;
-	ioctl(term->fd, TIOCSWINSZ, &ws);
-}
-
-void xredraw(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev)
-{
-}
-
-void (*event_func[LASTEvent])(struct xwindow_t *xw, struct terminal_t *term, XEvent *ev) = {
-	[Expose]           = xredraw,
-};
-
 bool fork_and_exec(int *master, const char *cmd, char *const argv[], int lines, int cols)
 {
 	pid_t pid;
@@ -154,20 +78,41 @@ bool fork_and_exec(int *master, const char *cmd, char *const argv[], int lines, 
 	return true;
 }
 
+int usage(char* binary) {
+	printf("Usage: %s {path to tape file}\n", binary);
+	return 1;
+}
+
 int main(int argc, char *const argv[])
 {
+	if(argc < 2)
+		return usage(argv[0]);
+
 	FILE *f = fopen(argv[1], "rb");
+
+	if(f == NULL) {
+		printf("Error: could not open %s\n", argv[1]);
+		return 1;
+	}
+
 	fseek(f, 0, SEEK_END);
 	long fsize = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
 	char *data = malloc(fsize + 1);
-	fread(data, fsize, 1, f);
+	if(!fread(data, fsize, 1, f)) {
+		printf("Error: could not read data from file %s\n", argv[1]);
+		return 1;
+	}
+
 	fclose(f);
 
 	data[fsize] = 0;
 
 	player = tape_player_new(data);
+
+	if(!player)
+		return 1;
 
 	extern const char *shell_cmd; /* defined in conf.h */
 	uint8_t buf[BUFSIZE];
@@ -189,7 +134,7 @@ int main(int argc, char *const argv[])
 	if(!sig_set(SIGUSR2, sig_handler, SA_RESTART))
 		logging(ERROR, "signal initialize failed\n");
 
-	if (!xw_init(&xw)) {
+	if (!xw_init(&xw, tape_player_width(player), tape_player_height(player))) {
 		logging(FATAL, "xwindow initialize failed\n");
 		goto xw_init_failed;
 	}
@@ -209,11 +154,6 @@ int main(int argc, char *const argv[])
 	}
 	child_alive = true;
 
-	/* initial terminal size defined in x.h */
-	// confev.width  = tape_player_width(player);
-	// confev.height = tape_player_height(player);
-	// xresize(&xw, &term, (XEvent *) &confev);
-
     ge_GIF *img = ge_new_gif(
         tape_player_output(player),
         tape_player_width(player), tape_player_height(player),
@@ -230,13 +170,8 @@ int main(int argc, char *const argv[])
 	while (child_alive) {
 		long long start = timeInMilliseconds();
 
-		while(XPending(xw.display)) {
+		while(XPending(xw.display))
 			XNextEvent(xw.display, &ev);
-			if (XFilterEvent(&ev, None))
-				continue;
-			if (event_func[ev.type])
-				event_func[ev.type](&xw, &term, &ev);
-		}
 
 		check_fds(&fds, &tv, term.fd);
 		if (FD_ISSET(term.fd, &fds)) {

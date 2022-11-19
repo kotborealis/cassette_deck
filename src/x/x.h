@@ -15,60 +15,6 @@ long long timeInMilliseconds(void) {
 
 #define XK_NO_MOD UINT_MAX
 
-enum { /* default terminal size 80x24 (8x16 dot font) */
-	TERM_WIDTH  = 640,
-	TERM_HEIGHT = 384,
-};
-
-struct keymap_t {
-	KeySym keysym;
-	unsigned int mask;
-	char str[BUFSIZE];
-};
-
-const struct keymap_t keymap[] = {
-	{XK_BackSpace, XK_NO_MOD, "\177"      },
-	{XK_Up,        Mod1Mask,  "\033\033[A"},
-	{XK_Up,        XK_NO_MOD, "\033[A"    },
-	{XK_Down,      Mod1Mask,  "\033\033[B"},
-	{XK_Down,      XK_NO_MOD, "\033[B"    },
-	{XK_Right,     Mod1Mask,  "\033\033[C"},
-	{XK_Right,     XK_NO_MOD, "\033[C"    },
-	{XK_Left,      Mod1Mask,  "\033\033[D"},
-	{XK_Left,      XK_NO_MOD, "\033[D"    },
-	{XK_Begin,     XK_NO_MOD, "\033[G"    },
-	{XK_Home,      XK_NO_MOD, "\033[1~"   },
-	{XK_Insert,    XK_NO_MOD, "\033[2~"   },
-	{XK_Delete,    XK_NO_MOD, "\033[3~"   },
-	{XK_End,       XK_NO_MOD, "\033[4~"   },
-	{XK_Prior,     XK_NO_MOD, "\033[5~"   },
-	{XK_Next,      XK_NO_MOD, "\033[6~"   },
-	{XK_F1,        XK_NO_MOD, "\033[[A"   },
-	{XK_F2,        XK_NO_MOD, "\033[[B"   },
-	{XK_F3,        XK_NO_MOD, "\033[[C"   },
-	{XK_F4,        XK_NO_MOD, "\033[[D"   },
-	{XK_F5,        XK_NO_MOD, "\033[[E"   },
-	{XK_F6,        XK_NO_MOD, "\033[17~"  },
-	{XK_F7,        XK_NO_MOD, "\033[18~"  },
-	{XK_F8,        XK_NO_MOD, "\033[19~"  },
-	{XK_F9,        XK_NO_MOD, "\033[20~"  },
-	{XK_F10,       XK_NO_MOD, "\033[21~"  },
-	{XK_F11,       XK_NO_MOD, "\033[23~"  },
-	{XK_F12,       XK_NO_MOD, "\033[24~"  },
-	{XK_F13,       XK_NO_MOD, "\033[25~"  },
-	{XK_F14,       XK_NO_MOD, "\033[26~"  },
-	{XK_F15,       XK_NO_MOD, "\033[28~"  },
-	{XK_F16,       XK_NO_MOD, "\033[29~"  },
-	{XK_F17,       XK_NO_MOD, "\033[31~"  },
-	{XK_F18,       XK_NO_MOD, "\033[32~"  },
-	{XK_F19,       XK_NO_MOD, "\033[33~"  },
-	{XK_F20,       XK_NO_MOD, "\033[34~"  },
-};
-
-/* not assigned:
-    kcbt=\E[Z,kmous=\E[M,kspd=^Z,
-*/
-
 struct xwindow_t {
 	Display *display;
 	Window window;
@@ -129,7 +75,7 @@ unsigned long color2pixel(struct xwindow_t *xw, uint32_t color)
 	}
 }
 
-bool xw_init(struct xwindow_t *xw)
+bool xw_init(struct xwindow_t *xw, uint16_t width, uint16_t height)
 {
 	XTextProperty xtext = {.value = (unsigned char *) "yaftx",
 		.encoding = XA_STRING, .format = 8, .nitems = 5};
@@ -151,7 +97,7 @@ bool xw_init(struct xwindow_t *xw)
 
 	xw->screen = DefaultScreen(xw->display);
 	xw->window = XCreateSimpleWindow(xw->display, DefaultRootWindow(xw->display),
-		0, 0, TERM_WIDTH, TERM_HEIGHT, 0, xw->color_palette[DEFAULT_FG], xw->color_palette[DEFAULT_BG]);
+		0, 0, width, height, 0, xw->color_palette[DEFAULT_FG], xw->color_palette[DEFAULT_BG]);
 	XSetWMProperties(xw->display, xw->window, &xtext, NULL, NULL, 0, NULL, NULL, NULL); /* return void */
 
 	xw->gc = XCreateGC(xw->display, xw->window, 0, NULL);
@@ -178,24 +124,6 @@ void xw_die(struct xwindow_t *xw)
 	XCloseDisplay(xw->display);
 }
 
-static inline void draw_sixel(struct xwindow_t *xw, int line, int col, struct cell_t *cellp)
-{
-	int w, h;
-	uint32_t color = 0;
-
-	for (h = 0; h < CELL_HEIGHT; h++) {
-		for (w = 0; w < CELL_WIDTH; w++) {
-			memcpy(&color, cellp->pixmap + BYTES_PER_PIXEL * (h * CELL_WIDTH + w), BYTES_PER_PIXEL);
-
-			if (color_list[DEFAULT_BG] != color) {
-				XSetForeground(xw->display, xw->gc, color2pixel(xw, color));
-				XDrawPoint(xw->display, xw->pixbuf, xw->gc,
-					col * CELL_WIDTH + w, line * CELL_HEIGHT + h);
-			}
-		}
-	}
-}
-
 static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int line, ge_GIF* img)
 {
 	int bdf_padding, glyph_width, margin_right;
@@ -219,10 +147,9 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 	for (col = term->cols - 1; col >= 0; col--) {
 		margin_right = (term->cols - 1 - col) * CELL_WIDTH;
 
-		/* draw sixel pixmap */
+		/* skip sixel pixmaps */
 		cellp = &term->cells[line][col];
 		if (cellp->has_pixmap) {
-			draw_sixel(xw, line, col, cellp);
 			continue;
 		}
 
