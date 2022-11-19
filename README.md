@@ -16,9 +16,32 @@ for such a simple tasks.
 The aim of this project is to recreate core of VHS with minimal dependencies.
 `cassete-deck` built with 2 pieces of software:
 
-* X11 for GUI preview;
 * [lecram/gifenc](https://github.com/lecram/gifenc) to write GIF files;
-* [uobikiemukot/yaft](https://github.com/uobikiemukot/yaft) used as a simple terminal emulator implementation.
+* [uobikiemukot/yaft](https://github.com/uobikiemukot/yaft) used as a simple terminal emulator implementation:
+    * This project is essentially a fork of [yaft](https://github.com/uobikiemukot/yaft) with GIF backend and `.tape` player.
+
+Such utility may be usefull to enrich documentation with animated GIFs which illustrate
+usage of CLI programs.
+
+## Prior art
+
+Of course, there's a lot of similar projects, like:
+
+* [VHS](https://github.com/charmbracelet/vhs):
+    * depends on chromium and ffmpeg.
+* [uobikiemukot/recterm](https://github.com/uobikiemukot/recterm):
+    * implementation by the author of [yaft](https://github.com/uobikiemukot/yaft);
+    * was not designed to execute commands from file.
+* [asciinema](https://github.com/asciinema/asciinema):
+    * records terminal to upload and replay it in browser;
+    * was not designed to execute commands from file.
+* [lecram/config](https://github.com/lecram/congif):
+    * renders `script` recordings as GIFs.
+* [script and scriptreplay](https://man7.org/linux/man-pages/man1/scriptreplay.1.html):
+    * GNU utility to record and replay terminal sessions.
+
+If you know any other interesting utilities for recording terminal emulators, feel free
+to update this list via pull request or issue.
 
 ## Build
 
@@ -57,4 +80,6 @@ This is implemented by sending `SIGUSR1` from controlled shell via
 
 * headless mode without X11 dependency;
 * more commands from VHS, compatibility with VHS tapes;
-* colors, themes.
+* colors, themes;
+* CI, CI actions;
+* padding, decorations.
