@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(aya)
+project(cassette_deck)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -46,12 +46,12 @@ add_custom_command(
 )
 
 
-add_executable(yaftx
+add_executable(cassette_deck
     src/x/yaftx.c
     src/x/x.h
     ${CMAKE_BINARY_DIR}/glyph.h
 )
 
 find_package(X11 COMPONENTS X11)
-target_link_libraries(yaftx PRIVATE gifenc X11 tape_player)
-target_include_directories(yaftx PRIVATE ${CMAKE_BINARY_DIR})
+target_link_libraries(cassette_deck PRIVATE gifenc X11 tape_player)
+target_include_directories(cassette_deck PRIVATE ${CMAKE_BINARY_DIR})

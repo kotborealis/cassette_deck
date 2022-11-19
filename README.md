@@ -16,6 +16,7 @@ for such a simple tasks.
 The aim of this project is to recreate core of VHS with minimal dependencies.
 `cassete-deck` built with 2 pieces of software:
 
+* X11 for GUI preview;
 * [lecram/gifenc](https://github.com/lecram/gifenc) to write GIF files;
 * [uobikiemukot/yaft](https://github.com/uobikiemukot/yaft) used as a simple terminal emulator implementation.
 
@@ -30,7 +31,7 @@ with C++17 support:
 CLI usage:
 
 ```sh
-./build/yaftx ./demo/hello.tape.gif
+./build/cassette_deck ./demo/hello.tape.gif
 ```
 
 ## Tape reference
@@ -49,3 +50,11 @@ AWAIT
 `AWAIT` commands pauses tape playback until last command is complete.
 This is implemented by sending `SIGUSR1` from controlled shell via
 `PROMPT_COMMAND` environment variable.
+
+![meta.tape](./demo/meta.tape.gif)
+
+## TODO
+
+* headless mode without X11 dependency;
+* more commands from VHS, compatibility with VHS tapes;
+* colors, themes.
