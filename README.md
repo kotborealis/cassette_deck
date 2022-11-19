@@ -1,96 +1,51 @@
-# yaft (yet another framebuffer terminal)
+# cassete-deck
 
-| Branch | Badge |
-| :--: | :--: |
-| master | [![CircleCI](https://circleci.com/gh/uobikiemukot/yaft.svg?style=svg)](https://circleci.com/gh/uobikiemukot/yaft) |
-| develop | [![CircleCI](https://circleci.com/gh/uobikiemukot/yaft/tree/develop.svg?style=svg)](https://circleci.com/gh/uobikiemukot/yaft/tree/develop) |
+Record terminal commands into a GIF file.
 
-Last update: Wed Mar 14 18:44:27 JST 2018
+![hello.tape](./demo/hello.tape.gif)
 
-## description
+This project was inspired by [VHS](https://github.com/charmbracelet/vhs).
 
-Yet Another Framebuffer Terminal (aka "yaft") is simple terminal emulator for minimalist.
+VHS requires `ffmpeg` and `chromium` to record terminal emulator GIFs.
+Both terminals and GIFs were invented **many** years ago, and are
+really simple and stupid.
+While using modern technologies to work with them is alright,
+it's not efficient to use millions SLOCs of `chromium` and `ffmpeg`
+for such a simple tasks.
 
-Features:
+The aim of this project is to recreate core of VHS with minimal dependencies.
+`cassete-deck` built with 2 pieces of software:
 
-+	various framebuffer types (8/15/16/24/32bpp)
-+	compatible with vt102 and Linux console ([detail](http://uobikiemukot.github.io/yaft/escape.html))
-+	UTF-8 encoding and UCS2 glyphs
-+	256 colors (same as xterm)
-+	wallpaper
-+	DRCS (DECDLD/DRCSMMv1) (experimental)
-+	sixel (experimental)
+* [lecram/gifenc](https://github.com/lecram/gifenc) to write GIF files;
+* [uobikiemukot/yaft](https://github.com/uobikiemukot/yaft) used as a simple terminal emulator implementation.
 
-There are Several ports:
+## Build
 
--	yaft for framebuffer console
-	-	Linux console
-	-	FreeBSD console
-	-	NetBSD/OpenBSD wscons (experimental)
--	yaftx for X Window System
--	[yaft-android](https://github.com/uobikiemukot/yaft-android) for Android
+Clone this repo with submodules, build using cmake 3.0+ and C/CPP compiler
+with C++17 support:
+![build.tape](./demo/build.tape.gif)
 
-## download
+## Usage
 
--	[yaft-0.2.9.tar.gz](https://github.com/uobikiemukot/yaft/archive/v0.2.9.tar.gz)
+CLI usage:
 
-## configuration
+```sh
+./build/yaftx ./demo/hello.tape.gif
+```
 
-If you want to change configuration, rewrite "conf.h".
+## Tape reference
 
-## environment variables
+See examples in `./examples`.
+Commands are modelled after [VHS's ones](https://github.com/charmbracelet/vhs#vhs-command-reference)
+and should be almost compatible.
 
--	FRAMEBUFFER=/dev/fb0: specify farmebuffer device
--	YAFT="wall": use current background as wallpaper (need [idump](https://github.com/uobikiemukot/idump) or fbv)
+There's one command that is not implemented in VHS:
+```
+TYPE start_long_running_process
+ENTER
+AWAIT
+```
 
-~~~
-$ idump /path/to/wallpaper.png; tput civis; YAFT="wall" FRAMEBUFFER="/dev/fb1" yaft
-~~~
-
-## how to use your favorite fonts
-
-You can use tools/mkfont_bdf to create "glyph.h".
-
-usage: tools/mkfont_bdf ALIAS_FILE BDF1 BDF2 BDF3 ... > glyph.h
-
--	ALIAS_FILE: glyph substitution rule file (see table/alias)
--	BDF1, BDF2, BDF3...: bdf files
-	+	yaft supports only "monospace" bdf font
-	+	you can specify mulitiple bdf fonts (but these fonts MUST be the same size)
-		+	If there is more than one glyph of the same codepoint, the glyph included in the FIRST bdf file is choosed
-
-~~~
-$ ./mkfont_bdf table/your_alias your/favorite/fonts.bdf > glyph.h
-~~~
-
-Or try glyph_builder.sh (bash script for creating yaft's glyph.h)
-
--	supported fonts: mplus, efont, milkjf, unifont, dina, terminus, profont, tamsyn
-
-## build and install
-
-BSD users should check README.bsd
-
-~~~
-$ export LANG=en_US.UTF-8 # yaft uses libc's wcwidth for calculating glyph width
-$ make
-# make install
-or
-$ make yaftx
-# make installx
-~~~
-
-## screenshot
-
-![screenshot1](http://uobikiemukot.github.io/img/yaft-screenshot.png)
-
-## license
-The MIT License (MIT)
-
-Copyright (c) 2012 haru (uobikiemukot at gmail dot com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+`AWAIT` commands pauses tape playback until last command is complete.
+This is implemented by sending `SIGUSR1` from controlled shell via
+`PROMPT_COMMAND` environment variable.

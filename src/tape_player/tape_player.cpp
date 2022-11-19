@@ -97,7 +97,9 @@ const char* tape_player_output(tape_player_t* player) {
 void tape_player_awaited(tape_player_t* player) {
     if(player->awaiting == 1) {
         player->awaiting = 0;
-        ((TapeParser*)player->tape)->pop();
+        if(((TapeParser*)player->tape)->front()->kind == TapeCommand::Kind::await) {
+            ((TapeParser*)player->tape)->pop();
+        }
     }
 }
 

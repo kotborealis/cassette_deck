@@ -1,9 +1,8 @@
-OUTPUT hello.tape.gif
-WIDTH 200
+OUTPUT demo/hello.tape.gif
+WIDTH 400
 HEIGHT 200
 
 SLEEP 1000
-TYPE echo $_PROMPT_COMMAND
 ENTER
 TYPE echo Hello, World!
 SLEEP 300
