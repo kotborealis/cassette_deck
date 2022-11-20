@@ -183,11 +183,11 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 				/* set color palette */
 				if (glyphp->bitmap[h] & (0x01 << (bdf_padding + w))) {
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.fg]);
-					img->frame[img->w * y + x] = 1;
+					img->frame[img->w * y + x] = color_pair.fg;
 				}
 				else if (color_pair.bg != DEFAULT_BG) {
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.bg]);
-					img->frame[img->w * y + x] = 1;
+					img->frame[img->w * y + x] = color_pair.bg;
 				}
 				else /* already draw */
 					continue;

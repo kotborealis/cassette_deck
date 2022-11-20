@@ -157,11 +157,8 @@ int main(int argc, char *const argv[])
     ge_GIF *img = ge_new_gif(
         tape_player_output(player),
         tape_player_width(player), tape_player_height(player),
-        (uint8_t []) {  /* palette */
-            0x00, 0x00, 0x00, /* 0 -> black */
-            0xff, 0xff, 0xff, /* 1 -> white */
-        },
-        1,              /* palette depth == log2(# of colors) */
+        color_list_u8,
+        8,              /* palette depth == log2(# of colors) */
         -1,             /* no transparency */
         0               /* infinite loop */
     );

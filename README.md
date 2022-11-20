@@ -25,6 +25,8 @@ The aim of this project is to recreate core of VHS with minimal dependencies.
 Such utility may be usefull to enrich documentation with animated GIFs which illustrate
 usage of CLI programs.
 
+![colors.tape](./demo/colors.tape.gif)
+
 ## Prior art
 
 Of course, there's a lot of similar projects, like:
@@ -82,6 +84,6 @@ This is implemented by sending `SIGUSR1` from controlled shell via
 
 * headless mode without X11 dependency;
 * more commands from VHS, compatibility with VHS tapes;
-* colors, themes;
+* themes;
 * CI, CI actions;
 * padding, decorations.
