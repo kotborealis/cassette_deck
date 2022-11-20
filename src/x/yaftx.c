@@ -69,7 +69,7 @@ bool fork_and_exec(int *master, const char *cmd, char *const argv[], int lines, 
 		esetenv("TERM", term_name, 1);
 
 		char* prompt_command = malloc(1024);
-		sprintf(prompt_command, "kill -12 %d", host_pid);
+		sprintf(prompt_command, "kill -USR2 %d", host_pid);
 		esetenv("PROMPT_COMMAND", prompt_command, 1);
 		eexecvp(cmd, argv);
 		/* never reach here */
