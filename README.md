@@ -2,6 +2,8 @@
 
 Record terminal commands into a GIF file.
 
+**⚠️ This is still just a MVP/technical demo/etc. Most features are not implemented/tested. Use cautiously.** 
+
 ![hello.tape](./demo/hello.tape.gif)
 
 This project was inspired by [VHS](https://github.com/charmbracelet/vhs).
