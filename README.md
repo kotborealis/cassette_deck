@@ -2,7 +2,7 @@
 
 Record terminal commands into a GIF file.
 
-**⚠️ This is still just a MVP/technical demo/etc. Most features are not implemented/tested. Use cautiously.** 
+**⚠️ This is still just a MVP/technical demo/etc. Most features are not implemented/tested. Use cautiously.**
 
 ![hello.tape](./demo/hello.tape.gif)
 
@@ -57,9 +57,14 @@ with C++17 support:
 
 CLI usage:
 
-```sh
-./build/cassette_deck ./demo/hello.tape.gif
-```
+* Preview mode --- depends on X11, opens graphic window to show shell in real time.
+    ```sh
+    ./build/cassette_deck ./demo/hello.tape.gif
+    ```
+* Headless mode --- does not depend on X11 at all, does everything in background, suitable for CI and such.
+    ```sh
+    ./build/cassette_deck --headless ./demo/hello.tape.gif
+    ```
 
 ## Tape reference
 
@@ -82,7 +87,6 @@ This is implemented by sending `SIGUSR1` from controlled shell via
 
 ## TODO
 
-* headless mode without X11 dependency;
 * more commands from VHS, compatibility with VHS tapes;
 * themes;
 * CI, CI actions;
