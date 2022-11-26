@@ -51,7 +51,7 @@ to update this list via pull request or issue.
 
 Clone this repo with submodules, build using cmake 3.0+ and C/CPP compiler
 with C++17 support:
-![build.tape](./demo/build.tape.gif)
+![build.tape](./demo/full_build.tape.gif)
 
 ## Usage
 
