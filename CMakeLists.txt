@@ -63,36 +63,5 @@ target_include_directories(cassette_deck_headless PRIVATE ${CMAKE_BINARY_DIR})
 
 file(GENERATE
     OUTPUT ${CMAKE_BINARY_DIR}/cassette_deck
-    CONTENT "\
-#! /usr/bin/env bash
-
-name=$0
-headless=0
-
-POSITIONAL_ARGS=()
-
-while [[ $# -gt 0 ]]; do
-    case $1 in
-    --headless)
-        headless=1
-        shift # past argument
-        ;;
-    -*|--*)
-        echo \"Unknown option $1\"
-        exit 1
-        ;;
-    *)
-        POSITIONAL_ARGS+=(\"$1\") # save positional arg
-        shift # past argument
-        ;;
-    esac
-done
-
-bin=\"$<TARGET_FILE:cassette_deck_preview>\"
-
-if [ \"$headless\" -eq \"1\" ]; then
-    bin=\"$<TARGET_FILE:cassette_deck_headless>\"
-fi
-
-exec -a $name $bin $POSITIONAL_ARGS
-")
+    INPUT ${CMAKE_SOURCE_DIR}/bin/cassette_deck.in
+)

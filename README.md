@@ -101,5 +101,5 @@ This is implemented by sending `SIGUSR1` from controlled shell via
 
 * more commands from VHS, compatibility with VHS tapes;
 * themes;
-* CI, CI actions;
+* CI actions;
 * padding, decorations.
