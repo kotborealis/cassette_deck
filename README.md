@@ -85,6 +85,18 @@ This is implemented by sending `SIGUSR1` from controlled shell via
 
 ![meta.tape](./demo/meta.tape.gif)
 
+### List of implemented commands
+
+* `OUTPUT {path}` --- specifies output GIF file. `./output.gif` if not specified.
+* `WIDTH {width}` --- shell width, in pixels. 640 by default.
+* `HEIGHT {height}` --- shell height, in pixels. 384 by default.
+* `REQUIRE {command}` --- checks if specified command is in `PATH`. If not, throws an error.
+* `KEY {key}` --- presses specified key.
+* `ENTER`, `BACKSPACE`, `SPACE`, `TAB` --- aliases for specified keys.
+* `SLEEP {ms}` --- sleeps for specified duration, in milliseconds.
+* `TYPE {text}` --- enters sequence of keys specified by keys, sleeping 50ms between them.
+* `AWAIT` --- sleeps until last executed shell command finishes.
+
 ## TODO
 
 * more commands from VHS, compatibility with VHS tapes;

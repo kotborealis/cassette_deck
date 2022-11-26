@@ -25,7 +25,7 @@ TapeParser::TapeParser(const std::string& tape) {
                 commands.push(new TapeCommandKey('\n'));
             else if(cmd == "BACKSPACE")
                 commands.push(new TapeCommandKey('\b'));
-            else if(cmd == "space")
+            else if(cmd == "SPACE")
                 commands.push(new TapeCommandKey(' '));
             else if(cmd == "TAB")
                 commands.push(new TapeCommandKey('\t'));
