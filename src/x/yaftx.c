@@ -134,10 +134,12 @@ int main(int argc, char *const argv[])
 	if(!sig_set(SIGUSR2, sig_handler, SA_RESTART))
 		logging(ERROR, "signal initialize failed\n");
 
+#ifndef HEADLESS
 	if (!xw_init(&xw, tape_player_width(player), tape_player_height(player))) {
 		logging(FATAL, "xwindow initialize failed\n");
 		goto xw_init_failed;
 	}
+#endif
 
 	if (!term_init(&term, tape_player_width(player), tape_player_height(player))) {
 		logging(FATAL, "terminal initialize failed\n");
@@ -167,9 +169,10 @@ int main(int argc, char *const argv[])
 	while (child_alive) {
 		long long start = timeInMilliseconds();
 
+#ifndef HEADLESS
 		while(XPending(xw.display))
 			XNextEvent(xw.display, &ev);
-
+#endif
 		check_fds(&fds, &tv, term.fd);
 		if (FD_ISSET(term.fd, &fds)) {
 			size = read(term.fd, buf, BUFSIZE);
@@ -203,14 +206,18 @@ int main(int argc, char *const argv[])
 
 	/* die */
 	term_die(&term);
+#ifndef HEADLESS
 	xw_die(&xw);
+#endif
 	sig_set(SIGCHLD, SIG_DFL, 0);
 	return EXIT_SUCCESS;
 
 fork_failed:
 	term_die(&term);
 term_init_failed:
+#ifndef HEADLESS
 	xw_die(&xw);
+#endif
 xw_init_failed:
 	return EXIT_FAILURE;
 }

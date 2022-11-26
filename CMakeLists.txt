@@ -45,13 +45,19 @@ add_custom_command(
     DEPENDS mkfont_bdf
 )
 
-
-add_executable(cassette_deck
+set(CASSETE_DECK_SOURCES
     src/x/yaftx.c
     src/x/x.h
     ${CMAKE_BINARY_DIR}/glyph.h
 )
 
+add_executable(cassette_deck_preview ${CASSETE_DECK_SOURCES})
 find_package(X11 COMPONENTS X11)
-target_link_libraries(cassette_deck PRIVATE gifenc X11 tape_player)
-target_include_directories(cassette_deck PRIVATE ${CMAKE_BINARY_DIR})
+target_link_libraries(cassette_deck_preview PRIVATE X11 gifenc tape_player)
+target_include_directories(cassette_deck_preview PRIVATE ${CMAKE_BINARY_DIR})
+
+add_executable(cassette_deck_headless ${CASSETE_DECK_SOURCES})
+target_compile_definitions(cassette_deck_headless PRIVATE HEADLESS)
+target_link_libraries(cassette_deck_headless PRIVATE gifenc tape_player)
+target_include_directories(cassette_deck_headless PRIVATE ${CMAKE_BINARY_DIR})
+

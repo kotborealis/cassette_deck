@@ -47,8 +47,10 @@ bool search_pxcache(uint32_t color, unsigned long *pixel)
 	return false;
 }
 
+
 unsigned long color2pixel(struct xwindow_t *xw, uint32_t color)
 {
+#ifndef HEADLESS
 	unsigned long pixel;
 	if (search_pxcache(color, &pixel)) {
 		return pixel;
@@ -73,10 +75,14 @@ unsigned long color2pixel(struct xwindow_t *xw, uint32_t color)
 			return xc.pixel;
 		}
 	}
+#else
+	return 0;
+#endif
 }
 
 bool xw_init(struct xwindow_t *xw, uint16_t width, uint16_t height)
 {
+#ifndef HEADLESS
 	XTextProperty xtext = {.value = (unsigned char *) "yaftx",
 		.encoding = XA_STRING, .format = 8, .nitems = 5};
 
@@ -112,16 +118,18 @@ bool xw_init(struct xwindow_t *xw, uint16_t width, uint16_t height)
 		ExposureMask | KeyPressMask | StructureNotifyMask);
 
 	XMapWindow(xw->display, xw->window);
-
+#endif
 	return true;
 }
 
 void xw_die(struct xwindow_t *xw)
 {
+#ifndef HEADLESS
 	XFreeGC(xw->display, xw->gc);
 	XFreePixmap(xw->display, xw->pixbuf);
 	XDestroyWindow(xw->display, xw->window);
 	XCloseDisplay(xw->display);
+#endif
 }
 
 static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int line, ge_GIF* img)
@@ -132,9 +140,11 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 	struct cell_t *cellp;
 	const struct glyph_t *glyphp;
 
+#ifndef HEADLESS
 	/* at first, fill all pixels of line in background color */
 	XSetForeground(xw->display, xw->gc, xw->color_palette[DEFAULT_BG]);
 	XFillRectangle(xw->display, xw->pixbuf, xw->gc, 0, line * CELL_HEIGHT, term->width, CELL_HEIGHT);
+#endif
 
 	if(img) {
 		for(int h = line * CELL_HEIGHT; h < line * CELL_HEIGHT + CELL_HEIGHT; h++) {
@@ -182,19 +192,25 @@ static inline void draw_line(struct xwindow_t *xw, struct terminal_t *term, int 
 				int y = line * CELL_HEIGHT + h;
 				/* set color palette */
 				if (glyphp->bitmap[h] & (0x01 << (bdf_padding + w))) {
+#ifndef HEADLESS
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.fg]);
+#endif
 					img->frame[img->w * y + x] = color_pair.fg;
 				}
 				else if (color_pair.bg != DEFAULT_BG) {
+#ifndef HEADLESS
 					XSetForeground(xw->display, xw->gc, xw->color_palette[color_pair.bg]);
+#endif
 					img->frame[img->w * y + x] = color_pair.bg;
 				}
 				else /* already draw */
 					continue;
 
 				/* update copy buffer */
+#ifndef HEADLESS
 				XDrawPoint(xw->display, xw->pixbuf, xw->gc,
 					term->width - 1 - margin_right - w, line * CELL_HEIGHT + h);
+#endif
 			}
 		}
 	}
@@ -216,10 +232,12 @@ void refresh(struct xwindow_t *xw, struct terminal_t *term, ge_GIF* img)
 			update_to = line;
 	}
 
+#ifndef HEADLESS
 	/* actual display update: vertical synchronizing */
 	if (update_from != -1)
 		XCopyArea(xw->display, xw->pixbuf, xw->window, xw->gc, 0, update_from * CELL_HEIGHT,
 			term->width, (update_to - update_from + 1) * CELL_HEIGHT, 0, update_from * CELL_HEIGHT);
+#endif
 
 	long long now = timeInMilliseconds();
 	if(last_frame_timing > 0) {
