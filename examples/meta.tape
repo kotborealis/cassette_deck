@@ -1,4 +1,5 @@
-OUTPUT ./demo/meta.tape.gif
+OUTPUT ./demo/meta.gif
+THEME default_dark
 
 SLEEP 500
 TYPE cat ./examples/meta.tape
@@ -14,7 +15,7 @@ TYPE ./build/cassette_deck ./examples/hello.tape
 ENTER
 AWAIT
 
-TYPE file ./demo/hello.tape.gif
+TYPE file ./demo/hello.gif
 ENTER
 AWAIT
 SLEEP 5000

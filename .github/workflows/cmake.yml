@@ -33,7 +33,7 @@ jobs:
 
     - name: Test
       run: |
-        OUTPUT=./demo/hello.tape.gif
+        OUTPUT=./demo/hello.gif
         rm $OUTPUT
         bash ${{github.workspace}}/build/cassette_deck --headless ./examples/hello.tape
         # Output should

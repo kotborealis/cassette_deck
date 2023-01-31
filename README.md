@@ -4,7 +4,7 @@ Record terminal commands into a GIF file.
 
 **⚠️ This is still just a MVP/technical demo/etc. Most features are not implemented/tested. Use cautiously.**
 
-![hello.tape](./demo/hello.tape.gif)
+![hello.tape](./demo/hello.gif)
 
 This project was inspired by [VHS](https://github.com/charmbracelet/vhs).
 
@@ -25,7 +25,7 @@ The aim of this project is to recreate core of VHS with minimal dependencies.
 Such utility may be usefull to enrich documentation with animated GIFs which illustrate
 usage of CLI programs.
 
-![colors.tape](./demo/colors.tape.gif)
+![theme_default_dark.tape](./demo/theme_default_dark.gif)
 
 ## Prior art
 
@@ -51,7 +51,7 @@ to update this list via pull request or issue.
 
 Clone this repo with submodules, build using cmake 3.0+ and C/CPP compiler
 with C++17 support:
-![build.tape](./demo/full_build.tape.gif)
+![build.tape](./demo/full_build.gif)
 
 ## Usage
 
@@ -59,11 +59,11 @@ CLI usage:
 
 * Preview mode --- depends on X11, opens graphic window to show shell in real time.
     ```sh
-    ./build/cassette_deck ./demo/hello.tape.gif
+    ./build/cassette_deck ./demo/hello.gif
     ```
 * Headless mode --- does not depend on X11 at all, does everything in background, suitable for CI and such.
     ```sh
-    ./build/cassette_deck --headless ./demo/hello.tape.gif
+    ./build/cassette_deck --headless ./demo/hello.gif
     ```
 
 ## Tape reference
@@ -83,7 +83,7 @@ AWAIT
 This is implemented by sending `SIGUSR1` from controlled shell via
 `PROMPT_COMMAND` environment variable.
 
-![meta.tape](./demo/meta.tape.gif)
+![meta.tape](./demo/meta.gif)
 
 ### List of implemented commands
 
@@ -96,6 +96,10 @@ This is implemented by sending `SIGUSR1` from controlled shell via
 * `SLEEP {ms}` --- sleeps for specified duration, in milliseconds.
 * `TYPE {text}` --- enters sequence of keys specified by keys, sleeping 50ms between them.
 * `AWAIT` --- sleeps until last executed shell command finishes.
+* `THEME` --- applies a theme to TTY. See [themes directory for list](./themes/)
+
+![theme_default_dark.tape](./demo/theme_default_dark.gif)
+![theme_default_light.tape](./demo/theme_default_light.gif)
 
 ## TODO
 

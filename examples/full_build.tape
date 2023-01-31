@@ -1,4 +1,5 @@
-OUTPUT demo/full_build.tape.gif
+OUTPUT demo/full_build.gif
+THEME default_dark
 
 SLEEP 1000
 

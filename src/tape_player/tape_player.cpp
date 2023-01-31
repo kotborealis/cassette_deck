@@ -103,6 +103,10 @@ const char* tape_player_output(tape_player_t* player) {
     return ((TapeParser*)player->tape)->output();
 }
 
+const char* tape_player_theme(tape_player_t* player) {
+    return ((TapeParser*)player->tape)->theme();
+}
+
 void tape_player_awaited(tape_player_t* player) {
     if(player->awaiting == 1) {
         player->awaiting = 0;

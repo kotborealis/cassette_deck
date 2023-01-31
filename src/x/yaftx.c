@@ -83,6 +83,9 @@ int usage(char* binary) {
 	return 1;
 }
 
+uint32_t color_list[COLORS];
+uint8_t color_list_u8[COLORS * 3];
+
 int main(int argc, char *const argv[])
 {
 	if(argc < 2)
@@ -110,6 +113,22 @@ int main(int argc, char *const argv[])
 	data[fsize] = 0;
 
 	player = tape_player_new(data);
+
+	{
+		const char* theme = tape_player_theme(player);
+		uint32_t* theme_colors = get_colors(theme);
+		uint8_t* theme_colors_flat = get_colors_flat(theme);
+
+		for(int i = 0; i < 16; i++)
+			color_list[i] = theme_colors[i];
+		for(int i = 16; i < COLORS; i++)
+			color_list[i] = extra_color_list[i - 16];
+
+		for(int i = 0; i < 16*3; i++)
+			color_list_u8[i] = theme_colors_flat[i];
+		for(int i = 16*3; i < COLORS*3; i++)
+			color_list_u8[i] = extra_color_list_flat[i - 16*3];
+	}
 
 	if(!player)
 		return 1;

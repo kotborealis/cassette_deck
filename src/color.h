@@ -1,3 +1,5 @@
+#pragma once
+
 /* See LICENSE for licence details. */
 /*
 	Standard VGA colors
@@ -9,15 +11,15 @@
 
 	byte order: (MSB) RR GG BB (LSB)
 */
+
+#include "themes.h"
+
 enum {
 	COLORS       = 256, /* number of color palette */
 	BITS_PER_RGB = 8,
 };
 
-const uint32_t color_list[COLORS] = {
-	/* system color: 16 */
-	0x000000, 0xAA0000, 0x00AA00, 0xAA5500, 0x0000AA, 0xAA00AA, 0x00AAAA, 0xAAAAAA/* 0xAAAAAA */,
-	0x555555, 0xFF5555, 0x55FF55, 0xFFFF55, 0x5555FF, 0xFF55FF, 0x55FFFF, 0xDFDFDF/* 0xFFFFFF */,
+const uint32_t extra_color_list[COLORS - 16] = {
 	/* color cube: 216 */
 	0x000000, 0x00005F, 0x000087, 0x0000AF, 0x0000D7, 0x0000FF, 0x005F00, 0x005F5F,
 	0x005F87, 0x005FAF, 0x005FD7, 0x005FFF, 0x008700, 0x00875F, 0x008787, 0x0087AF,
@@ -53,23 +55,7 @@ const uint32_t color_list[COLORS] = {
 };
 
 // same colors, but encoded in uint8t tuples
-const uint8_t color_list_u8[COLORS * 3] = {
-	0, 0, 0,
-	128, 0, 0,
-	0, 128, 0,
-	128, 128, 0,
-	0, 0, 128,
-	128, 0, 128,
-	0, 128, 128,
-	192, 192, 192,
-	128, 128, 128,
-	255, 0, 0,
-	0, 255, 0,
-	255, 255, 0,
-	0, 0, 255,
-	255, 0, 255,
-	0, 255, 255,
-	255, 255, 255,
+const uint8_t extra_color_list_flat[(COLORS - 16) * 3]	= {
 	0, 0, 0,
 	0, 0, 95,
 	0, 0, 135,

@@ -4,7 +4,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include "../3rd_party/gifenc/gifenc.h"
-#include<sys/time.h>
+#include <sys/time.h>
 
 long long timeInMilliseconds(void) {
     struct timeval tv;
@@ -12,6 +12,9 @@ long long timeInMilliseconds(void) {
     gettimeofday(&tv,NULL);
     return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
 }
+
+extern uint32_t color_list[COLORS];
+extern uint8_t color_list_u8[COLORS * 3];
 
 #define XK_NO_MOD UINT_MAX
 

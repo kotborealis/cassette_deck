@@ -1,4 +1,5 @@
-OUTPUT demo/hello.tape.gif
+OUTPUT demo/hello.gif
+THEME default_dark
 WIDTH 400
 HEIGHT 200
 

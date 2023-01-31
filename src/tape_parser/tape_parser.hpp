@@ -54,10 +54,12 @@ public:
     uint16_t width() const;
     uint16_t height() const;
     const char* output() const;
+    const char* theme() const;
 
 private:
     uint16_t _width = 640, _height = 384;
     std::string _output = "output.gif";
+    std::string _theme = "classic";
 
     std::queue<TapeCommand*> commands;
 };

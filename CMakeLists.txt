@@ -45,10 +45,22 @@ add_custom_command(
     DEPENDS mkfont_bdf
 )
 
+add_executable(theme_generator ./tool/theme_generator)
+
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/themes.h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND $<TARGET_FILE:theme_generator>
+            ./themes/
+            ${CMAKE_BINARY_DIR}/themes.h
+    DEPENDS theme_generator
+)
+
 set(CASSETE_DECK_SOURCES
     src/x/yaftx.c
     src/x/x.h
     ${CMAKE_BINARY_DIR}/glyph.h
+    ${CMAKE_BINARY_DIR}/themes.h
 )
 
 add_executable(cassette_deck_preview ${CASSETE_DECK_SOURCES})

@@ -49,6 +49,8 @@ TapeParser::TapeParser(const std::string& tape) {
             }
             else if(cmd == "OUTPUT")
                 _output = arg;
+            else if(cmd == "THEME")
+                _theme = arg;
             else if(cmd == "SLEEP")
                 commands.push(new TapeCommandSleep(std::stoi(arg)));
             else if(cmd == "WIDTH")
@@ -93,4 +95,7 @@ uint16_t TapeParser::height() const {
 }
 const char* TapeParser::output() const {
     return _output.c_str();
+}
+const char* TapeParser::theme() const {
+    return _theme.c_str();
 }

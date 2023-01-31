@@ -1,4 +1,4 @@
-OUTPUT demo/colors.tape.gif
+OUTPUT demo/colors.gif
 REQUIRE colortest-256
 TYPE colortest-256
 ENTER
